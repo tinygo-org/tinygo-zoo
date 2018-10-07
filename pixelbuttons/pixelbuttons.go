@@ -20,8 +20,9 @@ func main() {
 		y uint8 = 2
 	)
 
+	machine.ClearLEDMatrix()
+
 	for {
-		machine.SetLEDMatrix(x, y, false)
 		if !left.Get() {
 			switch {
 			case x > 0:
@@ -46,7 +47,7 @@ func main() {
 			}
 		}
 
-		machine.SetLEDMatrix(x, y, true)
+		machine.SetLEDMatrix(x, y)
 		time.Sleep(time.Millisecond * 100)
 	}
 }
