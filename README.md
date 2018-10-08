@@ -10,6 +10,10 @@ Various sample programs for microcontrollers using TinyGo (http://tinygo.org)
 
     make flash-microbit-pixelbuttons TARGET=microbit
 
+## Color lamp for Arduino Uno
+
+    make flash-arduino-colorlamp TARGET=arduino
+
 ## Color lamp for PCA10040 (NRF52-DK)
 
     make flash-nrf-colorlamp TARGET=pca10040
