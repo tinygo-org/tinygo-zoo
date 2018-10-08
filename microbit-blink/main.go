@@ -13,7 +13,7 @@ func main() {
 		machine.ClearLEDMatrix()
 		time.Sleep(time.Millisecond * 500)
 
-		machine.SetLEDMatrix(2, 2)
+		machine.SetEntireLEDMatrixOn()
 		time.Sleep(time.Millisecond * 500)
 	}
 }
