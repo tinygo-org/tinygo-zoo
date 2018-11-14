@@ -1,58 +1,22 @@
 
 # aliases
-.PHONY: clean
-
-TARGET ?= unix
-
-ifeq ($(TARGET),unix)
-# Regular *nix system.
-
-else ifeq ($(TARGET),pca10040)
-# PCA10040: nRF52832 development board
-OBJCOPY = arm-none-eabi-objcopy
-TGOFLAGS += -target $(TARGET)
-
-else ifeq ($(TARGET),microbit)
-# BBC micro:bit
-OBJCOPY = arm-none-eabi-objcopy
-TGOFLAGS += -target $(TARGET)
-
-else ifeq ($(TARGET),bluepill)
-# "blue pill" development board
-# See: https://wiki.stm32duino.com/index.php?title=Blue_Pill
-OBJCOPY = arm-none-eabi-objcopy
-TGOFLAGS += -target $(TARGET)
-
-else ifeq ($(TARGET),arduino)
-OBJCOPY = avr-objcopy
-TGOFLAGS += -target $(TARGET)
-
-else
-$(error Unknown target)
-
-endif
-
-ifeq ($(TARGET),pca10040)
-flash-%: build/%.hex
-	nrfjprog -f nrf52 --sectorerase --program $< --reset
-else ifeq ($(TARGET),microbit)
-flash-%: build/%.hex
-	openocd -f interface/cmsis-dap.cfg -f target/nrf51.cfg -c 'program $< reset exit'
-else ifeq ($(TARGET),arduino)
-flash-%: build/%.hex
-	avrdude -c arduino -p atmega328p -P /dev/ttyACM0 -U flash:w:$<
-else ifeq ($(TARGET),bluepill)
-flash-%: build/%.hex
-	openocd -f interface/stlink-v2.cfg -f target/stm32f1x.cfg -c 'program $< reset exit'
-endif
+.PHONY: clean arduino-colorlamp microbit-blink microbit-pixelbuttons nrf-colorlamp
 
 clean:
-	@rm -rf build
+	@rm -rf build/**
 
-# ELF file that can run on a microcontroller.
-build/%.elf: % %/*.go
-	tinygo build $(TGOFLAGS) -size=short -o $@ ./$<
+arduino-colorlamp:
+	docker run --rm -v $(PWD):/src hybridgroup/tinygo-all build -o /src/build/arduino-colorlamp.hex -target arduino /src/arduino-colorlamp/main.go
+	avrdude -c arduino -p atmega328p -P /dev/ttyACM0 -U flash:w:build/arduino-colorlamp.hex
 
-# Convert executable to Intel hex file (for flashing).
-build/%.hex: build/%.elf
-	$(OBJCOPY) -O ihex $^ $@
+microbit-blink:
+	docker run --rm -v $(PWD):/src hybridgroup/tinygo-all build -o /src/build/microbit-blink.hex -target microbit /src/microbit-blink/main.go
+	openocd -f interface/cmsis-dap.cfg -f target/nrf51.cfg -c 'program build/microbit-blink.hex reset exit'
+
+microbit-pixelbuttons:
+	docker run --rm -v $(PWD):/src hybridgroup/tinygo-all build -o /src/build/microbit-pixelbuttons.hex -target microbit /src/microbit-pixelbuttons/main.go
+	openocd -f interface/cmsis-dap.cfg -f target/nrf51.cfg -c 'program build/microbit-pixelbuttons.hex reset exit'
+
+nrf-colorlamp:
+	docker run --rm -v $(PWD):/src hybridgroup/tinygo-all build -o /src/build/nrf-colorlamp.hex -target pca10040 /src/nrf-colorlamp/main.go
+	nrfjprog -f nrf52 --sectorerase --program build/nrf-colorlamp.hex --reset

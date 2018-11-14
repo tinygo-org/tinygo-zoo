@@ -2,18 +2,22 @@
 
 Various sample programs for microcontrollers using TinyGo (http://tinygo.org)
 
+## Installation requirements
+
+    docker pull hybridgroup/tinygo-all
+
 ## Blink for BBC micro:bit
 
-    make flash-microbit-blink TARGET=microbit
+    make microbit-blink
 
 ## Pixel buttons for BBC micro:bit
 
-    make flash-microbit-pixelbuttons TARGET=microbit
+    make microbit-pixelbuttons
 
 ## Color lamp for Arduino Uno
 
-    make flash-arduino-colorlamp TARGET=arduino
+    make arduino-colorlamp
 
 ## Color lamp for PCA10040 (NRF52-DK)
 
-    make flash-nrf-colorlamp TARGET=pca10040
+    make nrf-colorlamp
