@@ -32,7 +32,7 @@ func main() {
 	machine.I2C0.Configure(machine.I2CConfig{})
 
 	// Init BlinkM
-	machine.I2C0.WriteTo(0x09, []byte("o"))
+	machine.I2C0.Tx(0x09, []byte("o"), nil)
 
 	button := machine.GPIO{buttonPin}
 	button.Configure(machine.GPIOConfig{Mode: machine.GPIO_INPUT})
@@ -71,7 +71,7 @@ func main() {
 		blueLED.Set(colors[blue])
 
 		// Update the BlinkM.
-		machine.I2C0.WriteTo(0x09, []byte{'n', byte(colors[red] >> 8), byte(colors[green] >> 8), byte(colors[blue] >> 8)})
+		machine.I2C0.Tx(0x09, []byte{'n', byte(colors[red] >> 8), byte(colors[green] >> 8), byte(colors[blue] >> 8)}, nil)
 
 		time.Sleep(time.Millisecond * 100)
 	}
