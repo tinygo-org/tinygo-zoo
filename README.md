@@ -8,17 +8,23 @@ Various sample programs for microcontrollers using TinyGo (http://tinygo.org)
 
     docker pull tinygo/tinygo
 
-### Install flashing tools for BBC micro:bit
+### Install tinygo-drivers into your LOCAL golang installation
 
-    sudo apt-get install openocd
+    go get -d github.com/ayke/tinygo-drivers
 
-### Install flashing tools for Arduino
+### Install flashing tools
 
-    sudo apt-get install avrdude
+    - BBC micro:bit
 
-### Install flashing tools for PCA10040
+        sudo apt-get install openocd
 
-Install nrfjprog.
+    - Arduino
+
+        sudo apt-get install avrdude
+
+    - PCA10040
+
+        Install nrfjprog.
 
 ## Blink for BBC micro:bit
 

@@ -7,7 +7,7 @@ clean:
 	rm -rf build/**
 
 build-arduino-colorlamp:
-	docker run --rm -v $(PWD):/src tinygo/tinygo build -o /src/build/arduino-colorlamp.hex -target arduino /src/arduino-colorlamp/main.go
+	docker run --rm -v "$(PWD):/src" -v "$(GOPATH):/gohost" -e "GOPATH=$(GOPATH):/gohost" tinygo/tinygo build -o /src/build/arduino-colorlamp.hex -target arduino /src/arduino-colorlamp/main.go
 
 flash-arduino-colorlamp:
 	avrdude -c arduino -p atmega328p -P /dev/ttyACM0 -U flash:w:build/arduino-colorlamp.hex
@@ -18,7 +18,7 @@ arduino-colorlamp:
 	make flash-arduino-colorlamp
 
 build-microbit-blink:
-	docker run --rm -v $(PWD):/src tinygo/tinygo build -o /src/build/microbit-blink.hex -target microbit /src/microbit-blink/main.go
+	docker run --rm -v "$(PWD):/src" -v "$(GOPATH):/gohost" -e "GOPATH=$(GOPATH):/gohost" tinygo/tinygo build -o /src/build/microbit-blink.hex -target microbit /src/microbit-blink/main.go
 
 flash-microbit-blink:
 	openocd -f interface/cmsis-dap.cfg -f target/nrf51.cfg -c 'program build/microbit-blink.hex reset exit'
@@ -29,7 +29,7 @@ microbit-blink:
 	make flash-microbit-blink
 
 build-microbit-pixelbuttons:
-	docker run --rm -v $(PWD):/src tinygo/tinygo build -o /src/build/microbit-pixelbuttons.hex -target microbit /src/microbit-pixelbuttons/main.go
+	docker run --rm -v "$(PWD):/src" -v "$(GOPATH):/gohost" -e "GOPATH=$(GOPATH):/gohost" tinygo/tinygo build -o /src/build/microbit-pixelbuttons.hex -target microbit /src/microbit-pixelbuttons/main.go
 
 flash-microbit-pixelbuttons:
 	openocd -f interface/cmsis-dap.cfg -f target/nrf51.cfg -c 'program build/microbit-pixelbuttons.hex reset exit'
@@ -40,7 +40,7 @@ microbit-pixelbuttons:
 	make flash-microbit-pixelbuttons
 
 build-nrf-colorlamp:
-	docker run --rm -v $(PWD):/src tinygo/tinygo build -o /src/build/nrf-colorlamp.hex -target pca10040 /src/nrf-colorlamp/main.go
+	docker run --rm -v "$(PWD):/src" -v "$(GOPATH):/gohost" -e "GOPATH=$(GOPATH):/gohost" tinygo/tinygo build -o /src/build/nrf-colorlamp.hex -target pca10040 /src/nrf-colorlamp/main.go
 
 flash-nrf-colorlamp:
 	nrfjprog -f nrf52 --sectorerase --program build/nrf-colorlamp.hex --reset
