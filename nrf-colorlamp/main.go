@@ -13,6 +13,8 @@ package main
 import (
 	"machine"
 	"time"
+
+	"github.com/aykevl/tinygo-drivers/blinkm"
 )
 
 const (
@@ -32,7 +34,8 @@ func main() {
 	machine.I2C0.Configure(machine.I2CConfig{})
 
 	// Init BlinkM
-	machine.I2C0.Tx(0x09, []byte("o"), nil)
+	blm := blinkm.New(machine.I2C0)
+	blm.StopScript()
 
 	button := machine.GPIO{buttonPin}
 	button.Configure(machine.GPIOConfig{Mode: machine.GPIO_INPUT})
@@ -71,7 +74,7 @@ func main() {
 		blueLED.Set(colors[blue])
 
 		// Update the BlinkM.
-		machine.I2C0.Tx(0x09, []byte{'n', byte(colors[red] >> 8), byte(colors[green] >> 8), byte(colors[blue] >> 8)}, nil)
+		blm.SetRGB(byte(colors[red]>>8), byte(colors[green]>>8), byte(colors[blue]>>8))
 
 		time.Sleep(time.Millisecond * 100)
 	}
