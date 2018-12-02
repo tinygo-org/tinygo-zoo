@@ -1,6 +1,6 @@
 
 # aliases
-.PHONY: clean arduino-colorlamp build-arduino-colorlamp flash-arduino-colorlamp microbit-blink build-microbit-blink flash-microbit-blink microbit-pixelbuttons build-microbit-pixelbuttons flash-microbit-pixelbuttons nrf-colorlamp build-nrf-colorlamp flash-nrf-colorlamp
+.PHONY: clean arduino-colorlamp build-arduino-colorlamp flash-arduino-colorlamp microbit-blink build-microbit-blink flash-microbit-blink microbit-pixelbuttons build-microbit-pixelbuttons flash-microbit-pixelbuttons nrf-colorlamp build-nrf-colorlamp flash-nrf-colorlamp microbit-accel build-microbit-accel flash-microbit-accel reelboard-accel build-reelboard-accel flash-reelboard-accel
 
 clean:
 	mkdir -p build
@@ -38,6 +38,28 @@ microbit-pixelbuttons:
 	make clean
 	make build-microbit-pixelbuttons
 	make flash-microbit-pixelbuttons
+
+build-microbit-accel:
+	docker run --rm -v "$(PWD):/src" -v "$(GOPATH):/gohost" -e "GOPATH=$(GOPATH):/gohost" tinygo/tinygo build -o /src/build/microbit-accel.hex -target reelboard /src/accel/main.go
+
+flash-microbit-accel:
+	openocd -f interface/cmsis-dap.cfg -f target/nrf51.cfg -c 'program build/microbit-accel.hex reset exit'
+
+microbit-accel:
+	make clean
+	make build-microbit-accel
+	make flash-microbit-accel
+
+build-reelboard-accel:
+	docker run --rm -v "$(PWD):/src" -v "$(GOPATH):/gohost" -e "GOPATH=$(GOPATH):/gohost" tinygo/tinygo build -o /src/build/reelboard-accel.hex -target reelboard /src/accel/main.go
+
+flash-reelboard-accel:
+	openocd -f interface/cmsis-dap.cfg -f target/nrf51.cfg -c 'program build/reelboard-accel.hex reset exit'
+
+reelboard-accel:
+	make clean
+	make build-reelboard-accel
+	make flash-reelboard-accel
 
 build-nrf-colorlamp:
 	docker run --rm -v "$(PWD):/src" -v "$(GOPATH):/gohost" -e "GOPATH=$(GOPATH):/gohost" tinygo/tinygo build -o /src/build/nrf-colorlamp.hex -target pca10040 /src/nrf-colorlamp/main.go

@@ -14,17 +14,23 @@ Various sample programs for microcontrollers using TinyGo (http://tinygo.org)
 
 ### Install flashing tools
 
-    - BBC micro:bit
+- BBC micro:bit
 
         sudo apt-get install openocd
 
-    - Arduino
+- Arduino
 
         sudo apt-get install avrdude
 
-    - PCA10040
+- PCA10040
+Install nrfjprog as follows.
+        
+First install the J-Link Software and Documentation Pack from Segger:
+https://www.segger.com/downloads/jlink/#J-LinkSoftwareAndDocumentationPack
 
-        Install nrfjprog.
+Then install the nRF5x Command-Line Tools:
+https://docs.zephyrproject.org/latest/tools/nordic_segger.html#nordic-segger
+
 
 ## Blink for BBC micro:bit
 
@@ -41,3 +47,11 @@ Various sample programs for microcontrollers using TinyGo (http://tinygo.org)
 ## Color lamp for PCA10040 (NRF52-DK)
 
     make nrf-colorlamp
+
+## Built-in accelerometer on BBC micro:bit
+
+    make microbit-accel
+
+## Built-in accelerometer on reel board
+
+    make reelboard-accel
