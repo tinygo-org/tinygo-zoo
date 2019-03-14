@@ -10,7 +10,7 @@ Various sample programs for microcontrollers using TinyGo (http://tinygo.org)
 
 ### Install tinygo-drivers into your LOCAL golang installation
 
-    go get -d github.com/ayke/tinygo-drivers
+    go get -d github.com/tinygo-org/drivers
 
 ### Install flashing tools
 

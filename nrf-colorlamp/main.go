@@ -14,7 +14,7 @@ import (
 	"machine"
 	"time"
 
-	"github.com/aykevl/tinygo-drivers/blinkm"
+	"github.com/tinygo-org/drivers/blinkm"
 )
 
 const (
