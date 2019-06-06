@@ -14,7 +14,7 @@ import (
 	"machine"
 	"time"
 
-	"github.com/tinygo-org/drivers/blinkm"
+	"tinygo.org/x/drivers/blinkm"
 )
 
 const (
@@ -37,8 +37,8 @@ func main() {
 	blm := blinkm.New(machine.I2C0)
 	blm.StopScript()
 
-	button := machine.GPIO{buttonPin}
-	button.Configure(machine.GPIOConfig{Mode: machine.GPIO_INPUT})
+	button := machine.Pin(buttonPin)
+	button.Configure(machine.PinConfig{Mode: machine.PinInput})
 
 	dial := machine.ADC{machine.ADC0}
 	dial.Configure()
