@@ -2,25 +2,29 @@
 package main
 
 import (
+	"image/color"
 	"machine"
 	"time"
+
+	"tinygo.org/x/drivers/microbitmatrix"
 )
 
 func main() {
-	machine.InitLEDMatrix()
+	display := microbitmatrix.New()
+	display.Configure(microbitmatrix.Config{})
+	display.ClearDisplay()
 
-	left := machine.GPIO{machine.BUTTONA}
-	left.Configure(machine.GPIOConfig{Mode: machine.GPIO_INPUT})
+	left := machine.BUTTONA
+	left.Configure(machine.PinConfig{Mode: machine.PinInput})
 
-	right := machine.GPIO{machine.BUTTONB}
-	right.Configure(machine.GPIOConfig{Mode: machine.GPIO_INPUT})
+	right := machine.BUTTONB
+	right.Configure(machine.PinConfig{Mode: machine.PinInput})
 
 	var (
-		x uint8 = 2
-		y uint8 = 2
+		x int16 = 2
+		y int16 = 2
+		c       = color.RGBA{255, 255, 255, 255}
 	)
-
-	machine.ClearLEDMatrix()
 
 	for {
 		if !left.Get() {
@@ -47,7 +51,7 @@ func main() {
 			}
 		}
 
-		machine.SetLEDMatrix(x, y)
+		display.SetPixel(x, y, c)
 		time.Sleep(time.Millisecond * 100)
 	}
 }
