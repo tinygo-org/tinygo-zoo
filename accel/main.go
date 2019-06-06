@@ -5,7 +5,7 @@ import (
 	"machine"
 	"time"
 
-	"github.com/tinygo-org/drivers/mma8653"
+	"tinygo.org/x/drivers/mma8653"
 )
 
 func main() {
@@ -13,10 +13,10 @@ func main() {
 
 	// Init mma8653
 	accel := mma8653.New(machine.I2C0)
-	accel.Configure(mma8653.DataRate100Hz)
+	accel.Configure(mma8653.DataRate200Hz, mma8653.Sensitivity2G)
 
 	for {
-		x, y, z := accel.ReadAcceleration()
+		x, y, z, _ := accel.ReadAcceleration()
 		println(x, y, z)
 		time.Sleep(time.Millisecond * 500)
 	}
