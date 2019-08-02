@@ -26,32 +26,38 @@ func main() {
 		c       = color.RGBA{255, 255, 255, 255}
 	)
 
+	then := time.Now()
 	for {
-		if !left.Get() {
-			switch {
-			case x > 0:
-				x--
-			case x == 0:
-				if y > 0 {
-					x = 4
-					y--
+		if time.Since(then).Nanoseconds() > 80000000 {
+			then = time.Now()
+
+			if !left.Get() {
+				switch {
+				case x > 0:
+					x--
+				case x == 0:
+					if y > 0 {
+						x = 4
+						y--
+					}
 				}
 			}
-		}
 
-		if !right.Get() {
-			switch {
-			case x < 4:
-				x++
-			case x == 4:
-				if y < 4 {
-					x = 0
-					y++
+			if !right.Get() {
+				switch {
+				case x < 4:
+					x++
+				case x == 4:
+					if y < 4 {
+						x = 0
+						y++
+					}
 				}
 			}
-		}
 
-		display.SetPixel(x, y, c)
-		time.Sleep(time.Millisecond * 100)
+			display.ClearDisplay()
+			display.SetPixel(x, y, c)
+		}
+		display.Display()
 	}
 }
