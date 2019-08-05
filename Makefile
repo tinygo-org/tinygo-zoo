@@ -39,6 +39,17 @@ microbit-pixelbuttons:
 	make build-microbit-pixelbuttons
 	make flash-microbit-pixelbuttons
 
+build-microbit-images:
+	docker run --rm -v "$(PWD):/src" -v "$(GOPATH):/gohost" -e "GOPATH=$(GOPATH):/gohost" tinygo/tinygo:0.6.1 tinygo build -o /src/build/microbit-images.hex -target microbit /src/microbit-images/main.go
+
+flash-microbit-images:
+	openocd -f interface/cmsis-dap.cfg -f target/nrf51.cfg -c 'program build/microbit-images.hex reset exit'
+
+microbit-images:
+	make clean
+	make build-microbit-pixelbuttons
+	make flash-microbit-pixelbuttons
+
 build-microbit-accel:
 	docker run --rm -v "$(PWD):/src" -v "$(GOPATH):/gohost" -e "GOPATH=$(GOPATH):/gohost" tinygo/tinygo:0.6.1 tinygo build -o /src/build/microbit-accel.hex -target microbit /src/accel/main.go
 
