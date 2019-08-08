@@ -23,14 +23,13 @@ Various sample programs for microcontrollers using TinyGo (http://tinygo.org)
         sudo apt-get install avrdude
 
 - PCA10040
-Install nrfjprog as follows.
-        
+  Install nrfjprog as follows.
+
 First install the J-Link Software and Documentation Pack from Segger:
 https://www.segger.com/downloads/jlink/#J-LinkSoftwareAndDocumentationPack
 
 Then install the nRF5x Command-Line Tools:
 https://docs.zephyrproject.org/latest/tools/nordic_segger.html#nordic-segger
-
 
 ## Blink for BBC micro:bit
 
@@ -39,6 +38,10 @@ https://docs.zephyrproject.org/latest/tools/nordic_segger.html#nordic-segger
 ## Pixel buttons for BBC micro:bit
 
     make microbit-pixelbuttons
+
+## Images for BBC micro:bit
+
+    make microbit-images
 
 ## Color lamp for Arduino Uno
 
