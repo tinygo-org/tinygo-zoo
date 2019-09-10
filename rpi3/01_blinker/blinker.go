@@ -9,30 +9,28 @@ var interval uint32
 
 // it's more than a little unclear that the values passed to this
 // interrupt handler are ever going to be useful
-func blinker(foo uint32, bar uint64) uint32 {
+func blinker(_ uint32, _ uint64) uint32 {
 	dev.LEDSet(on)
 	on = !on
+	print("set LED to ", on, "\n")
 	return interval
 }
 
-//
-// MAIN_QEMU hits the QEMU version of the counters directly.  It won't work
-// on real hardware.
-//
 func main() {
+	hi, lo := dev.GetRPIID()
+	if hi == 0 && lo == 0 {
+		print("you are running on QEMU so you aren't going to see any lights blinking...\n")
+	}
 
-	dev.GetRPIID()
-	blinkerSetup()
-
-	freq := dev.QEMUCounterFreq() //getting my freq on
+	freq := dev.CounterFreq() //getting my freq on
 	print("frequency per second is:")
 	dev.UART0Hex(freq) //this number is number of ticks/sec
 
 	//sets the timer for  N secs, where N is multiplier
 	interval = 1 * freq
-	dev.QEMUSetCounterTargetInterval(interval, blinker)
-	dev.QEMUCore0CounterToCore0Irq()
-	dev.QEMUEnableCounter()
+	dev.SetCounterTargetInterval(interval, blinker)
+	dev.Core0CounterToCore0Irq()
+	dev.EnableCounter()
 	dev.EnableTimerIRQ()
 	for {
 		dev.WaitForInterrupt()
