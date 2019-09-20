@@ -2,9 +2,9 @@ package main
 
 import (
 	dev "device/rpi3"
-	"runtime/volatile"
 )
 
+var interval uint32
 
 // not sure how useful the current value is, but the virtual timer should
 // have increased by exactly interval (or very close to it)
@@ -18,28 +18,34 @@ func myHandler(current uint32, virtualTimer uint64) uint32 {
 	return interval
 }
 
-func mainForRPI3OnHardware() {
-	//dev.IRQVectorInitEL1(HandleIRQ)
-	dev.TimerInit(interval)
-	dev.EnableInterruptController()
-	dev.EnableTimerIRQ()
+func main() {
+	dev.UART0TimeDateString(dev.Now())
+	print("\n")
+	testDelays()
+	// dev.BComTimerInit(interval)
+	// dev.EnableInterruptController()
+	// dev.EnableTimerIRQ()
+	//
+	// for {
+	// 	dev.WaitForInterrupt()
+	// }
+	dev.Abort()
 }
 
 func testDelays() {
-	print("hello from main\n")
-	print("Waiting 1000000 CPU cycles (ARM CPU): ")
-	dev.WaitCycles(1000000)
+	print("Waiting 3000000 CPU cycles (ARM CPU): ")
+	dev.WaitCycles(3000000)
 	print("OK\n")
 
-	print("Waiting 1000000 microsec (ARM CPU): ")
-	dev.WaitMuSec(1000000)
+	print("Waiting 3000000 microsec (ARM CPU): ")
+	dev.WaitMuSec(3000000)
 	print("OK\n")
 
-	print("Waiting 1000000 microsec (BCM System Timer): ")
+	print("Waiting 3000000 microsec (BCM System Timer): ")
 	if dev.SysTimer() == 0 {
 		print("Not available\n")
 	} else {
-		dev.WaitMuSecST(1000000)
+		dev.WaitMuSecST(3000000)
 		print("OK\n")
 	}
 }

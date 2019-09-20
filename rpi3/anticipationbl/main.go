@@ -83,7 +83,7 @@ func main() {
 			state = waiting
 		}
 	}
-	dev.QEMUTryExit()
+	//dev.QEMUTryExit()
 }
 
 func checkLine(s string, l int) bool {
@@ -130,6 +130,7 @@ const failLimitOnHexMode = 10
 
 // read a file using Intel Hex format https://en.wikipedia.org/wiki/Intel_HEX
 // only uses record types 00, 01, and 02
+//go:export readHex
 func readHex() bool {
 	fails := 0
 	baseAddr := uint64(0)
@@ -308,10 +309,12 @@ func performLaunch(length int) {
 		return
 	}
 	print(confirm)
+//	print("xxx perform launch\n")
 	addr := hexArgs[0]
-	stackPtr := hexArgs[1]
+	stackPtr := hexArgs[1] - 8 //writes are from lower to higher
 	heapPtr := hexArgs[2]
 	now := hexArgs[3]
+//	print("xxx about to jump:", addr, " ", stackPtr, " ", heapPtr, " ", now, "\n")
 	dev.AsmFull(`mov x1,{stackPtr}
 		mov x2,{heapPtr}
 		mov x3,{now}

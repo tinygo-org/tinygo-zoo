@@ -84,7 +84,6 @@ func Main(device string, kpath string, byteLimit int) {
 
 	// end of the program is the end of what we sent to the bootloader (highest address used)
 	endOfProgram := uint64(0)
-
 	//
 	// these are the sections that require us to copy bytes to target in hex format
 	// executable, rwdata, rodata
@@ -101,10 +100,12 @@ func Main(device string, kpath string, byteLimit int) {
 	entryPoint := execInfo.physAddr
 	rwInfo, err = getRWData(kpath)
 	if err != nil {
-		fatalf(terminal, "loading rw: %v", err)
-	}
-	if rwInfo.physAddr+rwInfo.size > endOfProgram {
-		endOfProgram = rwInfo.physAddr + rwInfo.size
+		log.Printf("WARNING: no RW section found in the elf file %v", kpath)
+		//fatalf(terminal, "loading rw: %v", err)
+	} else {
+		if rwInfo.physAddr+rwInfo.size > endOfProgram {
+			endOfProgram = rwInfo.physAddr + rwInfo.size
+		}
 	}
 	roInfo, err = getSectionByName(kpath, ".rodata")
 	if err != nil {
@@ -114,6 +115,9 @@ func Main(device string, kpath string, byteLimit int) {
 		endOfProgram = roInfo.physAddr + roInfo.size
 	}
 	for i, info := range []*sectionInfo{execInfo, rwInfo, roInfo} {
+		if info == nil {
+			continue
+		}
 		log.Printf("sending %s: 0x%04x bytes total, starts at offset 0x%04x in elf file\n", names[i], info.size, info.offset)
 		if !sendSection(terminal, info, in) {
 			fatalf(terminal, "giving up trying to send %s", names[i])
@@ -173,9 +177,9 @@ func sanityCheck(terminal io.ReadWriter, prog *sectionInfo, in *os.File, name st
 		if err != nil || n != len(rcvd) {
 			fatalf(terminal, "unable to read the disk to do comparison: %v", err)
 		}
-		for i := 0; i < len(rcvd) && p+uint64(i) < minSize; i++ {
+		for i := 0; i < len(rcvd) && uint64(i) < minSize && p+uint64(i)<prog.physAddr+minSize; i++ {
 			if rcvd[i] != onDisk[i] {
-				fatalf(terminal, "byte mismatch found at %04x: %x expected but got %x", int(p)+i, onDisk[i], rcvd[i])
+				fatalf(terminal, "byte mismatch found at %04x: %x expected but got %x (iteration %d, minsize %d, %d vs %d)", int(p)+i, onDisk[i], rcvd[i],i, minSize, len(onDisk),len(rcvd))
 			}
 		}
 	}
@@ -183,31 +187,28 @@ func sanityCheck(terminal io.ReadWriter, prog *sectionInfo, in *os.File, name st
 }
 
 func sendSection(terminal io.ReadWriter, info *sectionInfo, fp *os.File) bool {
-	for state != done {
-		switch state {
-		case waiting:
-			line := readLine(terminal)
-			if line == ready {
-				if sendSectionCommand(terminal) {
-					state = sectionSend
-					continue
-				}
+	switch state {
+	case waiting:
+		line := readLine(terminal)
+		if line == ready {
+			if sendSectionCommand(terminal) {
+				state = sectionSend
+			} else {
 				//failed to send the command, user will see us trying a few times
 				return false
 			}
-			log.Printf("expecting ready signal (?) but got '%s'", line)
-			return false
-		case sectionSend:
-			if err := transmitSection(terminal, info, fp); err == false {
-				return false
-			}
-			state = done
-			continue
-		default:
-			fatalf(terminal, "unknown anticipation state: %d", int(state))
 		}
+		fallthrough
+	case sectionSend:
+		if err := transmitSection(terminal, info, fp); err == false {
+			return false
+		}
+		state = waiting
+		return true
+	default:
+		fatalf(terminal, "unknown anticipation state: %d", int(state))
 	}
-	return true
+	return true //should never happen
 }
 
 func cleanupAndExit() {
@@ -504,11 +505,12 @@ func sendInflate(t io.ReadWriter, addr uint64, size uint64) bool {
 }
 
 func getRWData(kpath string) (*sectionInfo, error) {
-	return getProgramSection(kpath, false, true, true)
+	return getProgramSectionByHeader(kpath, false, true, true)
 }
 
 func getExecutable(kpath string) (*sectionInfo, error) {
-	return getProgramSection(kpath, true, false, true)
+	//return getSectionByName(kpath, ".text")
+	return getProgramSectionByHeader(kpath, true, false, true)
 }
 
 func getSectionByName(kpath string, sectionName string) (*sectionInfo, error) {
@@ -528,7 +530,7 @@ func getSectionByName(kpath string, sectionName string) (*sectionInfo, error) {
 	}, nil
 }
 
-func getProgramSection(kpath string, targExec bool, targWrite bool, targRead bool) (*sectionInfo, error) {
+func getProgramSectionByHeader(kpath string, targExec bool, targWrite bool, targRead bool) (*sectionInfo, error) {
 	elfFile, err := elf.Open(kpath)
 	if err != nil {
 		log.Fatalf("whoa!?!? can't read elf file but checked it before: %v", err)
@@ -558,7 +560,8 @@ func getProgramSection(kpath string, targExec bool, targWrite bool, targRead boo
 			}
 		}
 	}
-	return nil, fmt.Errorf("no executable program found in %s with attributes x=%v,w=%v,r==%v", kpath, targExec, targWrite, targRead)
+	return nil, fmt.Errorf("no executable program found in %s with attributes x=%v,w=%v,r==%v",
+		kpath, targExec, targWrite, targRead)
 }
 
 func simpleTerminal(terminal io.ReadWriter, device string, byteLimit int) {
@@ -567,7 +570,9 @@ func simpleTerminal(terminal io.ReadWriter, device string, byteLimit int) {
 		fatalf(terminal, "unable to run simple terminal when terminal is a file!")
 	}
 	byteCount := 0
-	log.Printf("starting terminal loop....")
+	log.Printf("starting terminal loop....\n")
+//	log.Printf("hackery: %s",readLine(terminal))
+
 	if device != "/dev/tty" {
 		k := setupTTY("/dev/tty", true)
 		kbd := k.(*term.Term)
@@ -584,7 +589,7 @@ func simpleTerminal(terminal io.ReadWriter, device string, byteLimit int) {
 				if err != nil {
 					fatalf(terminal, "unable to read from /dev/tty: %v", err)
 				}
-				_, err = t.Write(one)
+				_, err = terminal.Write(one)
 				if err != nil {
 					fatalf(terminal, "unable to write to device: %v", err)
 				}
@@ -596,12 +601,24 @@ func simpleTerminal(terminal io.ReadWriter, device string, byteLimit int) {
 		go func(wg *sync.WaitGroup) {
 			defer wg.Done()
 
-			for {
-				one := make([]byte, 1)
-				_, err := t.Read(one)
+			one := make([]byte, 1)
+			for  {
+				n, err := t.Read(one)
 				if err != nil {
 					fatalf(t, "unable to read from device: %v", err)
 					return
+				}
+				if n==0 {
+					fmt.Printf("read failed (no error, but no data read)\n")
+					continue
+				}
+				if one[0]==0{
+					fmt.Printf("nul ")
+					continue
+				}
+				if one[0]<32 && one[0]!='\n'{
+					fmt.Printf("[%02x]",one[0])
+					continue
 				}
 				_, err = kbd.Write(one)
 				if err != nil {
@@ -624,6 +641,7 @@ func pingLoop(t io.ReadWriter) {
 	// to futz with the set hardware flow control
 	attempts := 0
 	for attempts < maxPings {
+		log.Printf("sending ping %d\n", attempts)
 		ok, _ := sendSingleCommand(t, pingTransmit, "PING", 3, false)
 		if ok {
 			break
