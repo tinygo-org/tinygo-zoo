@@ -19,7 +19,7 @@ import (
 const normalSize = 32
 const maxDataLineFails = 2 //this is multiplied by maxFailsOneLine for # fails on a single data line
 const maxFailsOneLine = 5
-const maxCommandFails = 3 // usually the other side is in a bad state when this happens
+const maxCommandFails = 5 // usually the other side is in a bad state when this happens
 const maxPings = 25
 const sanityBlockSize = 0x20
 const notificationInterval = 0x800
@@ -177,9 +177,9 @@ func sanityCheck(terminal io.ReadWriter, prog *sectionInfo, in *os.File, name st
 		if err != nil || n != len(rcvd) {
 			fatalf(terminal, "unable to read the disk to do comparison: %v", err)
 		}
-		for i := 0; i < len(rcvd) && uint64(i) < minSize && p+uint64(i)<prog.physAddr+minSize; i++ {
+		for i := 0; i < len(rcvd) && uint64(i) < minSize && p+uint64(i) < prog.physAddr+minSize; i++ {
 			if rcvd[i] != onDisk[i] {
-				fatalf(terminal, "byte mismatch found at %04x: %x expected but got %x (iteration %d, minsize %d, %d vs %d)", int(p)+i, onDisk[i], rcvd[i],i, minSize, len(onDisk),len(rcvd))
+				fatalf(terminal, "byte mismatch found at %04x: %x expected but got %x (iteration %d, minsize %d, %d vs %d)", int(p)+i, onDisk[i], rcvd[i], i, minSize, len(onDisk), len(rcvd))
 			}
 		}
 	}
@@ -383,7 +383,15 @@ func sendHexData(t io.ReadWriter, size int, current uint64, buffer []byte) bool 
 	for i := 0; i < size; i++ {
 		payload += fmt.Sprintf("%02x", buffer[i])
 	}
+	prev := debugSent
+	if prev {
+		log.Printf("------------> DATA @ 0x%04x00", current)
+		debugSent = false
+	}
 	ok, _ := sendSingleCommand(t, payload, "DATA", maxFailsOneLine, false)
+	if prev {
+		debugSent = true
+	}
 	return ok
 }
 
@@ -443,6 +451,11 @@ func setupTTY(device string, cbreak bool) io.ReadWriter {
 		if err := tty.SetRaw(); err != nil {
 			log.Fatalf("unable to set raw on %s: %v", device, err)
 		}
+		a, err := tty.Available()
+		if err != nil {
+			log.Fatalf("unable to check Available on %s: %v", device, err)
+		}
+		log.Printf("available? %d\n", a)
 	}
 	cleanupNeeded = append(cleanupNeeded, tty)
 
@@ -571,7 +584,7 @@ func simpleTerminal(terminal io.ReadWriter, device string, byteLimit int) {
 	}
 	byteCount := 0
 	log.Printf("starting terminal loop....\n")
-//	log.Printf("hackery: %s",readLine(terminal))
+	//	log.Printf("hackery: %s",readLine(terminal))
 
 	if device != "/dev/tty" {
 		k := setupTTY("/dev/tty", true)
@@ -602,22 +615,22 @@ func simpleTerminal(terminal io.ReadWriter, device string, byteLimit int) {
 			defer wg.Done()
 
 			one := make([]byte, 1)
-			for  {
+			for {
 				n, err := t.Read(one)
 				if err != nil {
 					fatalf(t, "unable to read from device: %v", err)
 					return
 				}
-				if n==0 {
+				if n == 0 {
 					fmt.Printf("read failed (no error, but no data read)\n")
 					continue
 				}
-				if one[0]==0{
+				if one[0] == 0 {
 					fmt.Printf("nul ")
 					continue
 				}
-				if one[0]<32 && one[0]!='\n'{
-					fmt.Printf("[%02x]",one[0])
+				if one[0] < 32 && one[0] != '\n' {
+					fmt.Printf("[%02x]", one[0])
 					continue
 				}
 				_, err = kbd.Write(one)

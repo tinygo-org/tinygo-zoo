@@ -309,12 +309,11 @@ func performLaunch(length int) {
 		return
 	}
 	print(confirm)
-//	print("xxx perform launch\n")
 	addr := hexArgs[0]
-	stackPtr := hexArgs[1] - 8 //writes are from lower to higher
+	stackPtr := hexArgs[1] - 0x10 //writes are from lower to higher, but we have be 16 byte aligned
 	heapPtr := hexArgs[2]
 	now := hexArgs[3]
-//	print("xxx about to jump:", addr, " ", stackPtr, " ", heapPtr, " ", now, "\n")
+	//print("xxx about to jump:", addr, " ", stackPtr, " ", heapPtr, " ", now, "\n")
 	dev.AsmFull(`mov x1,{stackPtr}
 		mov x2,{heapPtr}
 		mov x3,{now}
