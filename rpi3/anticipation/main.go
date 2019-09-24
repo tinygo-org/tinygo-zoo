@@ -23,7 +23,7 @@ const maxCommandFails = 5 // usually the other side is in a bad state when this 
 const maxPings = 25
 const sanityBlockSize = 0x20
 const notificationInterval = 0x800
-const pageSize = 0x10000
+const pageSize = 0x100000
 
 var debugRcvd = false
 var debugRcvdChars = false
@@ -119,7 +119,11 @@ func Main(device string, kpath string, byteLimit int) {
 			continue
 		}
 		log.Printf("sending %s: 0x%04x bytes total, starts at offset 0x%04x in elf file\n", names[i], info.size, info.offset)
-		if !sendSection(terminal, info, in) {
+		ok, badState := sendSection(terminal, info, in)
+		if !ok {
+			if badState {
+				fatalf(terminal, "synchronization lost with device, aborting")
+			}
 			fatalf(terminal, "giving up trying to send %s", names[i])
 		}
 		sanityCheck(terminal, info, in, names[i])
@@ -186,29 +190,32 @@ func sanityCheck(terminal io.ReadWriter, prog *sectionInfo, in *os.File, name st
 	log.Printf("sanity check completed on '%s' (checked first 0x%04x bytes)", name, minSize)
 }
 
-func sendSection(terminal io.ReadWriter, info *sectionInfo, fp *os.File) bool {
+func sendSection(terminal io.ReadWriter, info *sectionInfo, fp *os.File) (bool, bool) {
 	switch state {
 	case waiting:
-		line := readLine(terminal)
+		line, ok := readLine(terminal)
+		if !ok {
+			return false, false
+		}
 		if line == ready {
-			if sendSectionCommand(terminal) {
+			ok, badState := sendSectionCommand(terminal)
+			if ok {
 				state = sectionSend
 			} else {
-				//failed to send the command, user will see us trying a few times
-				return false
+				return false, badState
 			}
 		}
 		fallthrough
 	case sectionSend:
 		if err := transmitSection(terminal, info, fp); err == false {
-			return false
+			return false, false
 		}
 		state = waiting
-		return true
+		return true, false
 	default:
 		fatalf(terminal, "unknown anticipation state: %d", int(state))
 	}
-	return true //should never happen
+	return true, false //should never happen
 }
 
 func cleanupAndExit() {
@@ -219,10 +226,13 @@ func cleanupAndExit() {
 	os.Exit(0)
 }
 
-func readOneByte(t io.ReadWriter) byte {
+func readOneByte(t io.ReadWriter) (byte, bool) {
 	c := make([]byte, 1)
 	n, err := t.Read(c)
 	if err != nil {
+		if err == io.EOF {
+			return 0, false
+		}
 		fatalf(t, "error reading character from terminal: %v", err)
 	}
 	if n == 0 && err == io.EOF {
@@ -235,13 +245,16 @@ func readOneByte(t io.ReadWriter) byte {
 			log.Printf("<<<< debugChar: %c", c[0])
 		}
 	}
-	return c[0]
+	return c[0], true
 }
 
-func readLine(t io.ReadWriter) string {
+func readLine(t io.ReadWriter) (string, bool) {
 	var buffer bytes.Buffer
 	for {
-		c := readOneByte(t)
+		c, ok := readOneByte(t)
+		if !ok {
+			return "", false
+		}
 		if c == 10 {
 			break
 		}
@@ -254,12 +267,12 @@ func readLine(t io.ReadWriter) string {
 		if debugRcvd {
 			log.Printf("<----------- EMPTY LINE received!")
 		}
-		return l
+		return l, true
 	}
 	if debugRcvd {
 		log.Printf("<----------- %s", l)
 	}
-	return l
+	return l, true
 }
 
 func fatalf(t io.ReadWriter, s string, args ...interface{}) {
@@ -324,7 +337,10 @@ func transmitFile(t io.ReadWriter, paddr uint64, filesz uint64, fp *os.File) boo
 
 // returns the line sent in either case
 func confirm(t io.ReadWriter) (bool, string) {
-	l := readLine(t)
+	l, ok := readLine(t)
+	if !ok {
+		return false, ""
+	}
 	if strings.HasPrefix(l, ".") {
 		return true, l
 	}
@@ -420,6 +436,10 @@ func sendSingleCommand(t io.ReadWriter, payload string, name string, maxFails in
 		}
 		if !quiet {
 			log.Printf("attempt %d of %s command failed, response: %s", tries, name, confirmLine)
+			//special case because we lost sync
+			if (sectionTransmit == payload || name == "ESA") && confirmLine == "?" {
+				return false, "?"
+			}
 		}
 		tries++
 	}
@@ -451,11 +471,10 @@ func setupTTY(device string, cbreak bool) io.ReadWriter {
 		if err := tty.SetRaw(); err != nil {
 			log.Fatalf("unable to set raw on %s: %v", device, err)
 		}
-		a, err := tty.Available()
+		err := tty.SetReadTimeout(time.Duration(5 * time.Second))
 		if err != nil {
-			log.Fatalf("unable to check Available on %s: %v", device, err)
+			log.Fatalf("unable to set read timeout on tty: %v", err)
 		}
-		log.Printf("available? %d\n", a)
 	}
 	cleanupNeeded = append(cleanupNeeded, tty)
 
@@ -468,9 +487,12 @@ func setupTTY(device string, cbreak bool) io.ReadWriter {
 	return tty
 }
 
-func sendSectionCommand(t io.ReadWriter) bool {
-	ok, _ := sendSingleCommand(t, sectionTransmit, "SECTION", maxCommandFails, false)
-	return ok
+func sendSectionCommand(t io.ReadWriter) (bool, bool) {
+	ok, line := sendSingleCommand(t, sectionTransmit, "SECTION", maxCommandFails, false)
+	if !ok && line == "?" {
+		return false, true
+	}
+	return ok, false
 }
 
 func isCommand(payload string) bool {
@@ -582,6 +604,7 @@ func simpleTerminal(terminal io.ReadWriter, device string, byteLimit int) {
 	if !ok {
 		fatalf(terminal, "unable to run simple terminal when terminal is a file!")
 	}
+	t.SetReadTimeout(0)
 	byteCount := 0
 	log.Printf("starting terminal loop....\n")
 	//	log.Printf("hackery: %s",readLine(terminal))

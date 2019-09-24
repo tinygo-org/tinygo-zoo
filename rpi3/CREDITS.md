@@ -24,3 +24,8 @@ https://github.com/eggman/raspberrypi
 
 * Raspberry PI Bare Metal Forum -- lots of excellent posts and helpful folks.
 https://www.raspberrypi.org/forums/viewforum.php?f=72&sid=a669482c89f6f7e9b2f7647ac200fa7c
+
+
+
+* krom -- Peter Lemon
+https://github.com/PeterLemon/RaspberryPi

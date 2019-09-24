@@ -6,7 +6,7 @@ all: clean kernel8.elf
 
 # note the target is rpi3_bl
 kernel8.elf: clean font.o
-	tinygo build -ldflags "-m aarch64elf font.o" --target=rpi3_bl -o kernel8.elf .
+	tinygo build -ldflags font.o -no-debug --target=rpi3_bl -o kernel8.elf .
 
 font.o: font.psf
 	ld.lld -m aarch64elf -r -b binary -o font.o font.psf
