@@ -23,6 +23,18 @@ host computer over a serial port. See this tutorial for how to install a
 serial cable connection to the host and RPI3:
 https://learn.adafruit.com/adafruits-raspberry-pi-lesson-5-using-a-console-cable/overview
 
+## How To Use
+
+Run the "device" part of the bootloader `anticipationbl` either on your RPI3 (connected via
+serial to the host) or on QEMU (see `make runqemu`).  Then you run the host side,
+passing the appropriate device (see `make runqemu` in `anticipation` for an example
+with QEMU).  You need to make sure you use the right device to talk to the device
+side, either serial port like `/dev/tty.SLAB_USBtoUART` or the tty device created
+by QEMU when you started the device side.  
+
+Once you have started the host side, it will transfer the elf file you supplied
+on the command line.  Once that is completed, the device-side bootloader jumps
+to the downloaded file's entry point and the downloaded file starts executing.
 
 ## What's Here
 
