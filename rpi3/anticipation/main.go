@@ -183,7 +183,8 @@ func sanityCheck(terminal io.ReadWriter, prog *sectionInfo, in *os.File, name st
 		}
 		for i := 0; i < len(rcvd) && uint64(i) < minSize && p+uint64(i) < prog.physAddr+minSize; i++ {
 			if rcvd[i] != onDisk[i] {
-				fatalf(terminal, "byte mismatch found at %04x: %x expected but got %x (iteration %d, minsize %d, %d vs %d)", int(p)+i, onDisk[i], rcvd[i], i, minSize, len(onDisk), len(rcvd))
+				log.Printf("byte mismatch found at 0x%04x: 0x%x expected but got 0x%x (iteration %d, minsize %d)",
+					int(p)+i, onDisk[i], rcvd[i], i, minSize)
 			}
 		}
 	}
@@ -331,7 +332,7 @@ func transmitFile(t io.ReadWriter, paddr uint64, filesz uint64, fp *os.File) boo
 	if !sendHexEOF(t) {
 		return false
 	}
-	log.Printf("completed sending file... %04x bytes", filesz)
+	log.Printf("completed sending file: 0x%04x bytes", filesz)
 	return true
 }
 
@@ -399,15 +400,15 @@ func sendHexData(t io.ReadWriter, size int, current uint64, buffer []byte) bool 
 	for i := 0; i < size; i++ {
 		payload += fmt.Sprintf("%02x", buffer[i])
 	}
-	prev := debugSent
-	if prev {
-		log.Printf("------------> DATA @ 0x%04x00", current)
-		debugSent = false
-	}
+	// prev := debugSent
+	// if prev {
+	// 	log.Printf("------------> DATA @ 0x%04x00", current)
+	// 	debugSent = false
+	// }
 	ok, _ := sendSingleCommand(t, payload, "DATA", maxFailsOneLine, false)
-	if prev {
-		debugSent = true
-	}
+	// if prev {
+	// 	debugSent = true
+	// }
 	return ok
 }
 

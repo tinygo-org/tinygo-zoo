@@ -14,7 +14,5 @@ font.o: font.psf
 rpi3_bl.o: rpi3_bl.S
 	clang --target=aarch64-elf -c rpi3_bl.S
 
-#ld.lld -m aarch64elf -nostdlib start.o font.o $(OBJS) -T link.ld -o kernel8.elf
-
 clean:
 	rm kernel8.elf kernel8.img *.o >/dev/null 2>/dev/null || true
