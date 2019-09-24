@@ -1,15 +1,15 @@
 all: kernel8.img
 
 # note that we are building kernel8.img as well as kernel8.elf.
-# kernel8.img is one that can be loaded onto an SD card and placed into your
-# rasberry pi.  The name of the kernel to load is kernel8.img on a RPI3 but
+# on raspberry pi (which uses bcm2837) kernel8.img is one that can be copied
+# onto an SD card and booted.  The name of the kernel to load is kernel8.img on a RPI3 but
 # if you have changed options in config.txt on the SD card, it might different
 # for you.
 #
-# kernel8.elf is used if you want to run and use QEMU as a simulator.
+# kernel8.elf is used if you want to run and use QEMU as a simulator (-M raspi3)
 #
 kernel8.img: clean
-	tinygo build --target=rpi3 -o kernel8.elf .
+	tinygo build --target=bcm2837 -o kernel8.elf .
 	llvm-objcopy -O binary kernel8.elf kernel8.img
 
 clean:

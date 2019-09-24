@@ -1,0 +1,4 @@
+{
+	"inherits": ["rpi3"],
+	"linkerscript": "rpi3_bl.ld"
+}
