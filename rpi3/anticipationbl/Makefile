@@ -8,8 +8,11 @@ all: kernel8.img
 #
 # kernel8.elf is used if you want to run and use QEMU as a simulator (-M raspi3)
 #
+
+## NOTE: this uses the bare metal version of RPI (--target rpi3) but all the things
+## NOTE: loaded WITH this bootloader should supply the --target rpi3_bl
 kernel8.img: clean
-	tinygo build --target=bcm2837 -o kernel8.elf .
+	tinygo build --target=rpi3 -o kernel8.elf .
 	llvm-objcopy -O binary kernel8.elf kernel8.img
 
 clean:

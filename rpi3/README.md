@@ -2,7 +2,7 @@
 
 ## Requirements
 You have to have three things in your PATH.  A copy of tinygo (that includes
-the rpi3 and rpi3_bl devices), a "normal" copy of go of at least version 1.11,
+the rpi3 devices, version 0.9+), a "normal" copy of go of at least version 1.11,
 and `llvm-copy`.
 
 The "normal" go will be used (only) to compile/run a program that runs on the host
@@ -39,6 +39,9 @@ interrupt to blink the light.
 * `02_delay` Demonstrates how to use the delays on the system and how to get
 the system time.  Note that RPI3 does not have a battery-powered clock, so
 the time is copied from the host to the running program via the bootloader.
+
+* `03_framebuffer` Initializes the framebuffer, and then uses a font to write
+to the "console" on the screen. It does this in a loop so it scrolls a lot.
 
 ## To bootload or not to bootload
 
