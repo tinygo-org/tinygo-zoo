@@ -21,7 +21,7 @@ func main() {
 	deltaX := int16(1)
 	deltaY := int16(1)
 	then := time.Now()
-	c := color.RGBA{255, 255, 255, 255}
+	c := color.RGBA{255, 255, 255, 0}
 
 	for {
 		if time.Since(then).Nanoseconds() > 80000000 {

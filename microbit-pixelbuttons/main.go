@@ -23,7 +23,7 @@ func main() {
 	var (
 		x int16 = 2
 		y int16 = 2
-		c       = color.RGBA{255, 255, 255, 255}
+		c       = color.RGBA{255, 255, 255, 0}
 	)
 
 	then := time.Now()
